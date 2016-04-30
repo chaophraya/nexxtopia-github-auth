@@ -1,8 +1,9 @@
 module.exports = {
     devtool: 'source-maps',
     entry: './index',
+    target: 'node',
     output: {
-        libraryTarget: 'umd',
+        libraryTarget: 'commonjs2',
         path: './dist/',
         filename: 'sinopia2-github-auth.min.js',
         library: 'sinopia2-github-auth'

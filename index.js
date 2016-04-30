@@ -11,9 +11,10 @@ const cache = {};
  * @param {String} accessToken
  * @param {Function} cb
  */
-function authenticate(config = {}, stuff = {}, username, accessToken, cb) {
+function authenticate(config = {}, stuff = {}, username = '', accessToken = '', cb) {
     const organization = config['org'];
     const cacheTTLms = config['cache-ttl-ms'] || 1000 * 30;
+    const githubApiUrl = config['github-api-url'];
 
     if (!!cache[username] && cache[username].token === accessToken) {
         if (cache[username].expires > Date.now()) {
@@ -53,6 +54,7 @@ function authenticate(config = {}, stuff = {}, username, accessToken, cb) {
     .then(response => {
         const body = response.body;
         const statusCode = response.statusCode;
+
         if (statusCode !== 200) {
             return cb(Error[statusCode](`Unexpected error [${statusCode}]: ${body}`));
         }
@@ -62,7 +64,7 @@ function authenticate(config = {}, stuff = {}, username, accessToken, cb) {
             return cb(Error[403](`Forbidden [403]: User ${username} is not a member of ${organization}`));
         }
 
-        cache[user] = {
+        cache[username] = {
             token: accessToken,
             orgs: orgs,
             expires: Date.now() + cacheTTLms
