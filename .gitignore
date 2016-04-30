@@ -3,3 +3,4 @@ dist/
 .idea/
 config.yaml
 node_modules/
+Dockerfile
