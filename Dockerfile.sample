@@ -2,9 +2,6 @@ FROM node
 
 MAINTAINER Yuthasak Tanruengsri<yuthasak.tanruengsri@gmail.de>
 
-# Add scm-source script and generated scm-source.json
-ADD scm-source.json /scm-source.json
-
 RUN mkdir -p /opt/sinopia/storage
 
 WORKDIR /opt/sinopia
