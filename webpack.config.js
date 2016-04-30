@@ -1,13 +1,15 @@
-const path = require('path');
-const fs = require('fs');
-
 module.exports = {
-    entry: './index.js',
-    target: 'node',
+    devtool: 'source-maps',
+    entry: './index',
     output: {
-        libraryTarget: 'commonjs2',
-        path: path.join(__dirname, 'dist', 'server'),
-        filename: 'sinopia2-github-auth.min.js'
+        libraryTarget: 'umd',
+        path: './dist/',
+        filename: 'sinopia2-github-auth.min.js',
+        library: 'sinopia2-github-auth'
+    },
+    resolve: {
+        modulesDirectories: ['node_modules'],
+        alias: {}
     },
     module: {
         loaders: [
@@ -15,12 +17,16 @@ module.exports = {
                 test: /\.js$/,
                 exclude: /node_modules/,
                 loader: 'babel'
+            },
+            {
+                test: /\.json$/,
+                loader: 'json'
             }
         ]
     },
     preLoaders: [{
         test: /\.js?$/,
-        exclude: path.join(__dirname, 'node_modules'),
+        exclude: /node_modules/,
         loaders: ['eslint']
     }],
     externals: {}
