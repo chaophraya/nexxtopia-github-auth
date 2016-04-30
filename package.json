@@ -5,9 +5,10 @@
   "main": "dist/sinopia2-github-auth.js",
   "scripts": {
     "clean": "rm -rf dist",
+    "test": "mocha --compilers js:babel-core/register ./tests/**",
+    "tdd": "mocha --watch --compilers js:babel-core/register ./tests/**",
     "dist": "export NODE_ENV='production' && export LOG_LEVEL='info' && npm run clean",
     "build": "npm run dist && webpack --config webpack.config.js",
-    "tdd": "nodemon dist/sinopia2-github-auth.min.js --watch dist",
     "start": "node dist/sinopia2-github-auth.min.js",
     "dev": "nodemon --exec babel-node -- ./index.js"
   },
