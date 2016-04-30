@@ -1,0 +1,5 @@
+npm-debug.log
+dist/
+.idea/
+config.yaml
+node_modules/

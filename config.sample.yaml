@@ -1,0 +1,7 @@
+client-id: cid12345
+client-secret: cs12345
+github-url: https://github.com
+github-api-url: https://github.com/api/v3
+cache-ttl-ms: 30000
+app-url: https://sample.org.com
+org: orgName

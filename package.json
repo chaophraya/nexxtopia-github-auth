@@ -1,0 +1,53 @@
+{
+  "name": "sinopia2-github-auth",
+  "version": "0.1.0",
+  "description": "Sinopia2 Github Authentication plugin",
+  "main": "dist/sinopia2-github-auth.js",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "dist": "export NODE_ENV='production' && export LOG_LEVEL='info' && npm run clean && npm run build",
+    "build": "webpack --config webpack.config.js",
+    "tdd": "nodemon dist/sinopia2-github-auth.min.js --watch dist",
+    "start": "node dist/sinopia2-github-auth.min.js",
+    "dev": "nodemon --exec babel-node -- ./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ytanruengsri/sinopia2-github-oauth.git"
+  },
+  "keywords": [
+    "sinopia",
+    "sinopia2",
+    "oauth2",
+    "oauth"
+  ],
+  "engines": {
+    "node": ">=6.0"
+  },
+  "author": "Yuthasak Tanruengsri <yuthasak.tanruengsri@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ytanruengsri/sinopia2-github-oauth/issues"
+  },
+  "homepage": "https://github.com/ytanruengsri/sinopia2-github-oauth#readme",
+  "dependencies": {
+    "github": "0.2.4",
+    "got": "^6.3.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.7.7",
+    "babel-core": "^6.7.7",
+    "babel-loader": "^6.2.4",
+    "babel-preset-es2015": "^6.6.0",
+    "babel-preset-stage-0": "^6.5.0",
+    "babel-register": "^6.7.2",
+    "eslint": "^2.9.0",
+    "eslint-loader": "^1.3.0",
+    "js-yaml": "^3.6.0",
+    "mocha": "^2.4.5",
+    "nodemon": "^1.9.2",
+    "sinon": "^1.17.3",
+    "webpack": "^1.13.0",
+    "webpack-dev-server": "^1.14.1"
+  }
+}
