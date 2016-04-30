@@ -5,6 +5,7 @@ Middleware for github/github enterprise authentication
 ## Warning
 This component should not not be considered ready for production (until it will reach 1.0.0)
 
+## License
 The MIT License (MIT)
 Copyright (c) 2016 Yuthasak Tanruengsri
 
