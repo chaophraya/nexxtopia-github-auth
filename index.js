@@ -156,7 +156,7 @@ function middlewares(config = {}, stuff = {}, app = {}, auth = {}) {
             //     "events_url": "https://github.com/api/v3/users/jdoe/events{/privacy}",
             //     "received_events_url": "https://github.com/api/v3/users/jdoe/received_events",
             //     "type": "User",
-            //     "name": "Yuthasak Tanruengsri",
+            //     "name": "John Doe",
             //     "created_at": "2015-08-14T07:26:15Z",
             //     "updated_at": "2016-04-29T12:03:06Z",
             //     "suspended_at": null
