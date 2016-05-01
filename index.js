@@ -90,7 +90,7 @@ function authenticate(config = {}, stuff = {}, username = '', accessToken = '', 
 function middlewares(config = {}, stuff = {}, app = {}, auth = {}) {
     const githubUrl = config['github-url'];
     const githubApiUrl = config['github-api-url'];
-    const Url = config['-url'];
+    const appUrl = config['app-url'];
     const clientId = config['client-id'];
     const clientSecret = config['client-secret'];
     const userAgent = stuff['config']['user_agent'];
