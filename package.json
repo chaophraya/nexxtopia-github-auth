@@ -1,6 +1,6 @@
 {
   "name": "sinopia2-github-auth",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Sinopia2 Github Authentication plugin",
   "main": "dist/sinopia2-github-auth.js",
   "scripts": {
