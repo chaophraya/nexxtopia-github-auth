@@ -1,12 +1,14 @@
 !dist
-.travis.yml
 CHANGELOG.md
 config.sample.yaml
+config.yaml
 create-scm-source.sh
 Dockerfile.sample
+Dockerfile
 sinopia2-github-auth-cli.py
 webpack.config.js
 .babelrc
 .editorconfig
 .eslintrc
-.gitignore
+.travis.yml
+tests/
