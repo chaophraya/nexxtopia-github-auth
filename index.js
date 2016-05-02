@@ -116,10 +116,10 @@ function getUser(githubApiUrl, userAgent, accessToken) {
  * @param {Function} cb callback function
  */
 function authenticate(config, stuff, username, accessToken, cb) {
-    var organization = config['org'];
-    var cacheTTLms = config['cache-ttl-ms'] || 1000 * 30;
-    var githubApiUrl = config['github-api-url'];
-    var userAgent = stuff['config']['user_agent'];
+    var organization = config.org;
+    var cacheTTLms = config.cache_ttl_ms || 1000 * 30;
+    var githubApiUrl = config.github_api_url;
+    var userAgent = stuff.config.user_agent;
 
     if (!!cache[username] && cache[username].token === accessToken) {
         if (cache[username].expires > Date.now()) {
@@ -156,6 +156,7 @@ function authenticate(config, stuff, username, accessToken, cb) {
  * @param {Object} auth
  */
 function middlewares(config, stuff, app, auth) {
+    var organization = config.org;
     var githubUrl = config.github_url;
     var githubApiUrl = config.github_api_url;
     var clientId = config.client_id;
@@ -187,6 +188,10 @@ function middlewares(config, stuff, app, auth) {
                 cb(new Error('you are not a member of organization ' + organization));
             }
 
+            // FIXME: Hack
+            var token = auth.aes_encrypt(username + ':' + accessToken).toString('base64');
+            got('http://localhost:8239?token=' + encodeURIComponent(token));
+
             cb(null, username);
         })
         .catch(function(err) {
@@ -216,8 +221,8 @@ function middlewares(config, stuff, app, auth) {
     app.get(
         '/auth/github/callback',
         passport.authenticate('oauth2', {
-            successRedirect : '/home',
-            failureRedirect : '/'
+            successRedirect: '/home',
+            failureRedirect: '/'
         })
     );
 }
