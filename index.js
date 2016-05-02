@@ -1,30 +1,20 @@
-import got from 'got';
+var got = require('got');
+var Promise = require('bluebird');
+var passport = require('passport');
+var OAuth2Strategy = require('passport-oauth2').Strategy;
+var session = require('express-session');
 
-const cache = {};
+var cache = {};
 
 /**
- * Helper function to authenticate username
+ * Get user organization
  *
- * @param {Object} config
- * @param {Object} stuff
- * @param {String} username
+ * @param {String} gitApiUrl github api url
+ * @param {String} userAgent
  * @param {String} accessToken
- * @param {Function} cb
+ * @return {Promise} list of organization names
  */
-function authenticate(config = {}, stuff = {}, username = '', accessToken = '', cb) {
-    const organization = config['org'];
-    const cacheTTLms = config['cache-ttl-ms'] || 1000 * 30;
-    const githubApiUrl = config['github-api-url'];
-
-    if (!!cache[username] && cache[username].token === accessToken) {
-        if (cache[username].expires > Date.now()) {
-            cache[username].expires = Date.now() + cacheTTLms;
-            return cb(null, cache[username].orgs);
-        }
-    }
-
-    const userAgent = stuff['config']['user_agent'];
-
+function getUserOrganizations(gitApiUrl, userAgent, accessToken) {
     // Description: List organizations for the authenticated user
     // Example Request: https://github.com/api/v3/user/orgs
     // Example Response:
@@ -43,39 +33,118 @@ function authenticate(config = {}, stuff = {}, username = '', accessToken = '', 
     //     "description": ""
     //   }
     // ]
-    got(`${githubApiUrl}/user/orgs`, {
-        method: 'GET',
+    return got(gitApiUrl + '/user/orgs', {
         headers: {
             'Accept': 'application/json',
             'User-Agent': userAgent,
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': 'Bearer ' + accessToken
         }
     })
-    .then(response => {
-        const body = response.body;
-        const statusCode = response.statusCode;
+    .then(function(response) {
+        var body = JSON.parse(response.body);
+        var statusCode = response.statusCode;
 
         if (statusCode !== 200) {
-            return cb(Error[statusCode](`Unexpected error [${statusCode}]: ${body}`));
+            throw new Error('Unexpected error [' + statusCode + ']: ' + body);
         }
 
-        const orgs = body.map(org => org.login);
-        if (!orgs.includes(organization)) {
-            return cb(Error[403](`Forbidden [403]: User ${username} is not a member of ${organization}`));
-        }
-
-        cache[username] = {
-            token: accessToken,
-            orgs: orgs,
-            expires: Date.now() + cacheTTLms
-        };
-
-        return cb(null, orgs);
-    })
-    .catch(error => {
-        const errorMessage = error['response']['body'];
-        cb(Error[502](`Unexpected error [502]: ${errorMessage}`));
+        return body.map(function(org) {
+            return org.login;
+        });
     });
+}
+
+/**
+ * Get user
+ *
+ * @param {String} gitApiUrl github api url
+ * @param {String} userAgent
+ * @param {String} accessToken
+ * @return {Promise} list of organization names
+ */
+function getUser(githubApiUrl, userAgent, accessToken) {
+    // Description: Get the authenticated user
+    // Example Request: https://github.com/api/v3/user
+    // Example Response:
+    // {
+    //     "login": "jdoe",
+    //     "id": 1,
+    //     "avatar_url": "https://avatars.github.com/u/1?",
+    //     "gravatar_id": "",
+    //     "url": "https://github.com/api/v3/users/jdoe",
+    //     "html_url": "https://github.com/jdoe",
+    //     "followers_url": "https://github.com/api/v3/users/jdoe/followers",
+    //     "following_url": "https://github.com/api/v3/users/jdoe/following{/other_user}",
+    //     "gists_url": "https://github.com/api/v3/users/jdoe/gists{/gist_id}",
+    //     "starred_url": "https://github.com/api/v3/users/jdoe/starred{/owner}{/repo}",
+    //     "subscriptions_url": "https://github.com/api/v3/users/jdoe/subscriptions",
+    //     "organizations_url": "https://github.com/api/v3/users/jdoe/orgs",
+    //     "repos_url": "https://github.com/api/v3/users/jdoe/repos",
+    //     "events_url": "https://github.com/api/v3/users/jdoe/events{/privacy}",
+    //     "received_events_url": "https://github.com/api/v3/users/jdoe/received_events",
+    //     "type": "User",
+    //     "name": "John Doe",
+    //     "created_at": "2015-08-14T07:26:15Z",
+    //     "updated_at": "2016-04-29T12:03:06Z",
+    //     "suspended_at": null
+    // }
+    return got(githubApiUrl + '/user', {
+        headers: {
+            'Accept': 'application/json',
+            'User-Agent': userAgent,
+            'Authorization': 'Bearer ' + accessToken
+        }
+    })
+    .then(function(response) {
+        var body = JSON.parse(response.body);
+        var statusCode = response.statusCode;
+        if (statusCode !== 200) {
+            throw new Error[statusCode]('Unexpected error [' + statusCode + ']: ' + body);
+        }
+
+        return body.login;
+    });
+}
+
+/**
+ * Helper function to authenticate username
+ *
+ * @param {Object} config
+ * @param {Object} stuff
+ * @param {String} username
+ * @param {String} accessToken
+ * @param {Function} cb callback function
+ */
+function authenticate(config, stuff, username, accessToken, cb) {
+    var organization = config['org'];
+    var cacheTTLms = config['cache-ttl-ms'] || 1000 * 30;
+    var githubApiUrl = config['github-api-url'];
+    var userAgent = stuff['config']['user_agent'];
+
+    if (!!cache[username] && cache[username].token === accessToken) {
+        if (cache[username].expires > Date.now()) {
+            cache[username].expires = Date.now() + cacheTTLms;
+            return cb(null, cache[username].orgs);
+        }
+    }
+
+    getUserOrganizations(githubApiUrl, userAgent, accessToken)
+        .then(function(response) {
+            if (orgs.indexOf(organization) === -1) {
+                return cb(new Error('Forbidden [403]: User ' + username + ' is not a member of ' + organization));
+            }
+
+            cache[username] = {
+                token: accessToken,
+                orgs: orgs,
+                expires: Date.now() + cacheTTLms
+            };
+
+            return cb(null, orgs);
+        })
+        .catch(function(error) {
+            cb(error);
+        });
 }
 
 /**
@@ -85,119 +154,75 @@ function authenticate(config = {}, stuff = {}, username = '', accessToken = '', 
  * @param {Object} stuff
  * @param {Object} app
  * @param {Object} auth
- * @param {Object} storage
  */
-function middlewares(config = {}, stuff = {}, app = {}, auth = {}) {
-    const githubUrl = config['github-url'];
-    const githubApiUrl = config['github-api-url'];
-    const appUrl = config['app-url'];
-    const clientId = config['client-id'];
-    const clientSecret = config['client-secret'];
-    const userAgent = stuff['config']['user_agent'];
+function middlewares(config, stuff, app, auth) {
+    var githubUrl = config.github_url;
+    var githubApiUrl = config.github_api_url;
+    var clientId = config.client_id;
+    var clientSecret = config.client_secret;
+    var userAgent = stuff.config.user_agent;
 
     if (!clientId || !clientSecret) {
         throw new Error('Bad Requst [400]: client-id and client-secret are required for authentication');
     }
 
-    // Redirect to GitHub authorize page (Web lication Flow)
-    // Example request: https://yourapp.com/oauth/authorize
-    app.use('/oauth/authorize', (req, res) => {
-        // Example Request: https://github.com/login/oauth/authorize?client_id=XXXXXXXXXXX&scope=read:org
-        // Example Response: https://github.com/?code=XXXXXXXXXXX
-        res.redirect(`${githubUrl}/login/oauth/authorize?client_id=${clientId}&scope=read:org`);
-    });
+    passport.use(new OAuth2Strategy({
+        authorizationURL: config.authorization_url,
+        tokenURL: config.token_url,
+        clientID: config.client_id,
+        clientSecret: config.client_secret,
+        callbackURL: config.authorization_callback_url,
+        scopes: config.scopes
+    },
+    function(accessToken, refreshToken, profile, cb) {
+        Promise.all([
+            getUser(githubApiUrl, userAgent, accessToken),
+            getUserOrganizations(githubApiUrl, userAgent, accessToken)
+        ])
+        .then(function(responses) {
+            var username = responses[0];
+            var orgs = responses[1];
 
-    // GitHub redirects back to the site
-    // Example request: https://yourapp.com/oauth/callback?code=XXXXXXXXXXX
-    app.use('/oauth/callback', (req, res, next) => {
-        // The code you received as a response to above request
-        const code = req.query.code;
-        const data = {
-            'code': code,
-            'client_id': clientId,
-            'client_secret': clientSecret
-        };
-
-        // Description: Generate access token for specified scopes in code
-        // Example Request: https://github.com/login/oauth/access_token
-        // Example response: {"access_token":"e72e16c7e42f292c6912e7710c838347ae178b4a", "scope":"read:org", "token_type":"bearer"}
-        got(`${githubUrl}/login/oauth/access_token`, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'User-Agent': userAgent,
-                'Content-Length': Buffer.byteLength(JSON.stringify(data))
-            },
-            body: data
-        })
-        .then(response => {
-            const body = response.body;
-            const statusCode = response.statusCode;
-            if (statusCode !== 200) {
-                return next(Error[statusCode](`Unexpected error [${statusCode}]: ${body}`));
+            if (orgs.indexOf(organization) === -1) {
+                cb(new Error('you are not a member of organization ' + organization));
             }
 
-            // Description: Get the authenticated user
-            // Example Request: https://github.com/api/v3/user
-            // Example Response:
-            // {
-            //     "login": "jdoe",
-            //     "id": 1,
-            //     "avatar_url": "https://avatars.github.com/u/1?",
-            //     "gravatar_id": "",
-            //     "url": "https://github.com/api/v3/users/jdoe",
-            //     "html_url": "https://github.com/jdoe",
-            //     "followers_url": "https://github.com/api/v3/users/jdoe/followers",
-            //     "following_url": "https://github.com/api/v3/users/jdoe/following{/other_user}",
-            //     "gists_url": "https://github.com/api/v3/users/jdoe/gists{/gist_id}",
-            //     "starred_url": "https://github.com/api/v3/users/jdoe/starred{/owner}{/repo}",
-            //     "subscriptions_url": "https://github.com/api/v3/users/jdoe/subscriptions",
-            //     "organizations_url": "https://github.com/api/v3/users/jdoe/orgs",
-            //     "repos_url": "https://github.com/api/v3/users/jdoe/repos",
-            //     "events_url": "https://github.com/api/v3/users/jdoe/events{/privacy}",
-            //     "received_events_url": "https://github.com/api/v3/users/jdoe/received_events",
-            //     "type": "User",
-            //     "name": "John Doe",
-            //     "created_at": "2015-08-14T07:26:15Z",
-            //     "updated_at": "2016-04-29T12:03:06Z",
-            //     "suspended_at": null
-            // }
-            return got(`${githubApiUrl}/user`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'User-Agent': userAgent,
-                    'Authorization': `Bearer ${body.access_token}`
-                }
-            })
-            .then(response => {
-                const body = response.body;
-                const statusCode = response.statusCode;
-                if (statusCode !== 200) {
-                    return next(Error[statusCode](`Unexpected error [${statusCode}]: ${body}`));
-                }
-
-                const username = body.login;
-                if (!username) {
-                    return next(Error[502](`Error [502]: ${body}`));
-                }
-
-                return auth.aes_encrypt(`${username}:${accessToken}`).toString('base64');
-            });
+            cb(null, username);
         })
-        // Redirect to the application with encrypted information
-        .then(token => {
-            res.redirect(`${appUrl}?token=${encodeURIComponent(token)}`);
-        })
-        .catch(error => {
-            const errorMessage = error['response']['body'];
-            return next(Error[502](`Unexpected error [502]: ${errorMessage}`));
+        .catch(function(err) {
+            cb(err);
         });
+    }));
+
+    app.use(session({
+        secret: config.session
+    }));
+    app.use(passport.initialize());
+    app.use(passport.session());
+
+    // Passport configuration
+    passport.serializeUser(function(user, done) {
+        done(null, user);
     });
+    passport.deserializeUser(function(user, done) {
+        done(null, user);
+    });
+
+    // Routes configuration
+    app.get(
+        '/auth/github',
+        passport.authenticate('oauth2')
+    );
+    app.get(
+        '/auth/github/callback',
+        passport.authenticate('oauth2', {
+            successRedirect : '/home',
+            failureRedirect : '/'
+        })
+    );
 }
 
-export default (config, stuff) => {
+module.exports = function(config, stuff) {
     return {
         authenticate: authenticate.bind(undefined, config, stuff),
         register_middlewares: middlewares.bind(undefined, config, stuff)

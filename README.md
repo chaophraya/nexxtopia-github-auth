@@ -1,4 +1,4 @@
-# sinopia2-github-oauth
+# nexxtopia-github-oauth
 
 Middleware for github/github enterprise authentication
 
