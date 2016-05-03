@@ -1,4 +1,3 @@
-!dist
 .editorconfig
-.eslintrc
+.gitignore
 tests/
