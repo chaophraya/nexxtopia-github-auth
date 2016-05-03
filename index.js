@@ -2,6 +2,7 @@ var got = require('got');
 var Promise = require('bluebird');
 var passport = require('passport');
 var OAuth2Strategy = require('passport-oauth2').Strategy;
+var BearerStrategy = require('passport-http-bearer').Strategy;
 var session = require('express-session');
 
 var cache = {};
@@ -188,16 +189,35 @@ function middlewares(config, stuff, app, auth) {
                 cb(new Error('you are not a member of organization ' + organization));
             }
 
-            // FIXME: Hack
-            var token = auth.aes_encrypt(username + ':' + accessToken).toString('base64');
-            got('http://localhost:8239?token=' + encodeURIComponent(token));
-
             cb(null, username);
         })
         .catch(function(err) {
             cb(err);
         });
     }));
+
+    passport.use(new BearerStrategy(
+        function(accessToken, cb) {
+            Promise.all([
+                getUser(githubApiUrl, userAgent, accessToken),
+                getUserOrganizations(githubApiUrl, userAgent, accessToken)
+            ])
+            .then(function(responses) {
+                var username = responses[0];
+                var orgs = responses[1];
+
+                if (orgs.indexOf(organization) === -1) {
+                    cb(new Error('you are not a member of organization ' + organization));
+                }
+
+                var token = auth.aes_encrypt(username + ':' + accessToken).toString('base64');
+                cb(null, token);
+            })
+            .catch(function(err) {
+                cb(err);
+            });
+        }
+    ));
 
     app.use(session({
         secret: config.session
@@ -214,9 +234,14 @@ function middlewares(config, stuff, app, auth) {
     });
 
     // Routes configuration
-    app.get(
-        '/auth/github',
-        passport.authenticate('oauth2')
+    app.post(
+        '/auth/github/auth_token',
+        passport.authenticate('bearer')
+        function(req, res) {
+            res.json({
+                auth_token: req.token
+            });
+        }
     );
     app.get(
         '/auth/github/callback',
