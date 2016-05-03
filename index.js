@@ -234,6 +234,10 @@ function middlewares(config, stuff, app, auth) {
     });
 
     // Routes configuration
+    app.get(
+        '/auth/github',
+        passport.authenticate('oauth2')
+    );
     app.post(
         '/auth/github/auth_token',
         passport.authenticate('bearer'),

@@ -1,6 +1,6 @@
 {
   "name": "nexxtopia-github-auth",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Nexxtopia Github Authentication plugin",
   "main": "index.js",
   "repository": {
