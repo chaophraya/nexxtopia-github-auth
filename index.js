@@ -130,7 +130,7 @@ function authenticate(config, stuff, username, accessToken, cb) {
     }
 
     getUserOrganizations(githubApiUrl, userAgent, accessToken)
-        .then(function(response) {
+        .then(function(orgs) {
             if (orgs.indexOf(organization) === -1) {
                 return cb(new Error('Forbidden [403]: User ' + username + ' is not a member of ' + organization));
             }
@@ -236,10 +236,10 @@ function middlewares(config, stuff, app, auth) {
     // Routes configuration
     app.post(
         '/auth/github/auth_token',
-        passport.authenticate('bearer')
+        passport.authenticate('bearer'),
         function(req, res) {
             res.json({
-                auth_token: req.token
+                auth_token: req.user
             });
         }
     );
