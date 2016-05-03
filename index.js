@@ -168,13 +168,14 @@ function middlewares(config, stuff, app, auth) {
         throw new Error('Bad Requst [400]: client-id and client-secret are required for authentication');
     }
 
+    // Passport configuration
     passport.use(new OAuth2Strategy({
         authorizationURL: config.authorization_url,
         tokenURL: config.token_url,
         clientID: config.client_id,
         clientSecret: config.client_secret,
         callbackURL: config.authorization_callback_url,
-        scopes: config.scopes
+        scope: 'read:org'
     },
     function(accessToken, refreshToken, profile, cb) {
         Promise.all([
@@ -234,10 +235,17 @@ function middlewares(config, stuff, app, auth) {
     });
 
     // Routes configuration
+    /**
+     * Redirect users to request GitHub access
+     */
     app.get(
         '/auth/github',
         passport.authenticate('oauth2')
     );
+
+    /**
+     * Request `_authToken` using for publishing npm package
+     */
     app.post(
         '/auth/github/auth_token',
         passport.authenticate('bearer'),
@@ -247,6 +255,10 @@ function middlewares(config, stuff, app, auth) {
             });
         }
     );
+
+    /**
+     * Redirects to the application with a temporary code
+     */
     app.get(
         '/auth/github/callback',
         passport.authenticate('oauth2', {
